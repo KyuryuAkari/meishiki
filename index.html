@@ -4,7 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>無料 命式ツール｜九流あかり（試作）</title>
-<meta name="description" content="生年月日と時刻から四柱推命の命式・五行バランス・六壬の盤を計算します。計算はブラウザの中だけで行い、入力内容はどこにも送信しません。">
+<meta name="description" content="生年月日と時刻から四柱推命の命式・五行バランス・六壬の盤を計算します。計算はブラウザの中だけで行い、生年月日などの入力内容は送信されません。">
+<!-- Google tag (gtag.js)：アクセス数とボタンの利用回数だけを計測。入力内容は送らない -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N7FN7CKB30"></script>
+<script>
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());
+gtag('config','G-N7FN7CKB30');
+</script>
 <style>
 :root{--ink:#2b2433;--sub:#6d6478;--line:#e4dcea;--bg:#faf7fc;--card:#fff;--accent:#7a4fa3;--accent2:#c9a24b;
 --wood:#4f9a5c;--fire:#d4553f;--earth:#b8893a;--metal:#9a9aa6;--water:#3b6fb6}
@@ -72,7 +79,7 @@ footer{text-align:center;font-size:.78rem;color:var(--sub);padding:24px 16px 40p
     <div class="radios"><label><input type="radio" name="g" value="女" checked> 女性</label><label><input type="radio" name="g" value="男"> 男性</label><label><input type="radio" name="g" value=""> 回答しない</label></div>
   </div></div>
   <button class="primary" id="calc">命式を出す</button>
-  <p class="note">入力した生年月日は、このページの中（お使いのブラウザ）だけで計算します。どこにも送信・保存しません。</p>
+  <p class="note">生年月日などの入力内容は送信されません。利用状況の把握のため、アクセス数とボタンの利用回数をGoogleアナリティクスで計測しています。</p>
   <p id="error" class="err"></p>
 </section>
 
@@ -93,7 +100,7 @@ footer{text-align:center;font-size:.78rem;color:var(--sub);padding:24px 16px 40p
   <h2>深く読むなら AI東洋占術Starter</h2>
   <p>このツールで出せるのは命式の「計算」までです。格局・用神・人物の読み方の手順や、出生時刻が分からないときの候補の絞り込み質問まで、AIに任せて深く読みたい方は「AI東洋占術Starter」をどうぞ。このツールと同じ計算ロジックが入っています。</p>
   <p class="note">対応AI：ChatGPT（推論の強いモデル）とGrokで動作確認済み</p>
-  <a class="btn" href="https://kyuryu-akari.booth.pm/items/8874126" target="_blank" rel="noopener">BOOTHで「AI東洋占術Starter」を見る</a>
+  <a class="btn" id="booth" href="https://kyuryu-akari.booth.pm/items/8874126?utm_source=meishiki_tool&amp;utm_medium=referral&amp;utm_campaign=tool_link" target="_blank" rel="noopener">BOOTHで「AI東洋占術Starter」を見る</a>
 </section>
 
 <section class="card">
@@ -108,7 +115,7 @@ footer{text-align:center;font-size:.78rem;color:var(--sub);padding:24px 16px 40p
   </ul>
 </section>
 </main>
-<footer>© 九流あかり｜無料命式ツール 試作版 v0.1.0</footer>
+<footer>© 九流あかり｜無料命式ツール 試作版 v0.1.1</footer>
 
 <script>
 /*!
@@ -762,6 +769,9 @@ var EL=['木','火','土','金','水'],ELC={'木':'var(--wood)','火':'var(--fir
 var STEM_EL={'甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水'};
 var BR_EL={'子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火','午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水'};
 var last=null;
+// 計測：送るのは time_known（時刻を入れたか）と result_type（結果の種類）だけ。生年月日・時刻・性別は送らない
+function resultType(x){if(!x)return 'none';return x.status==='OK'?'confirmed':x.status==='NO_BIRTH_TIME'?'candidates_13':x.status==='BOUNDARY_VERIFICATION_REQUIRED'?'boundary_both':'error';}
+function track(name,x){try{if(typeof window.gtag!=='function')return;var p={};if(x){p.time_known=(x.input&&x.input.timeUnknown===false)?'true':(x.input?'false':'unknown');p.result_type=resultType(x);}window.gtag('event',name,p);}catch(e){}}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function ch(x,map){return '<span class="el-'+map[x]+'">'+esc(x)+'</span>';}
 function fmt(dt){return dt?dt.slice(0,16).replace('T',' '):'';}
@@ -833,17 +843,21 @@ $('calc').addEventListener('click',function(){
   if(!$('unknown').checked){var t=$('btime').value;if(!/^\d{2}:\d{2}/.test(t)){$('error').textContent='時刻を入力するか「時刻が分からない」にチェックしてください';return;}inp.hour=+t.slice(0,2);inp.minute=+t.slice(3,5);}
   var g=document.querySelector('input[name=g]:checked');if(g&&g.value)inp.gender=g.value;
   last=A.calculateMeishiki(inp);render(last);
+  track('meishiki_calc',last);
 });
 $('copy').addEventListener('click',function(){
+  track('meishiki_copy',last);
   var txt=$('json').value;
   function done(){$('copymsg').textContent='コピーしました。AIのチャットに貼り付けてください。';}
   if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(txt).then(done,fallback);}else fallback();
   function fallback(){var ta=$('json');ta.parentNode.open=true;ta.select();try{document.execCommand('copy');done();}catch(e){$('copymsg').textContent='自動でコピーできませんでした。下の枠の中身を選択してコピーしてください。';}}
 });
 $('save').addEventListener('click',function(){
+  track('meishiki_save',last);
   var blob=new Blob([$('json').value],{type:'application/json'});var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='meishiki_'+(last&&last.input?last.input.birthDate:'data')+'.json';document.body.appendChild(a);a.click();a.remove();
 });
+$('booth').addEventListener('click',function(){track('booth_click',null);});
 })();
 </script>
 </body>
